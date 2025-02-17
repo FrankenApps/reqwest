@@ -185,6 +185,8 @@ struct Config {
     tls_built_in_certs_webpki: bool,
     #[cfg(feature = "rustls-tls-native-roots-no-provider")]
     tls_built_in_certs_native: bool,
+    #[cfg(feature = "rustls-tls-platform-verifier")]
+    tls_platform_verifier: bool,
     #[cfg(feature = "__rustls")]
     crls: Vec<CertificateRevocationList>,
     #[cfg(feature = "__tls")]
@@ -308,6 +310,8 @@ impl ClientBuilder {
                 tls_built_in_certs_webpki: true,
                 #[cfg(feature = "rustls-tls-native-roots-no-provider")]
                 tls_built_in_certs_native: true,
+                #[cfg(feature = "rustls-tls-platform-verifier")]
+                tls_platform_verifier: true,
                 #[cfg(any(feature = "native-tls", feature = "__rustls"))]
                 identity: None,
                 #[cfg(feature = "__rustls")]
@@ -665,6 +669,7 @@ impl ClientBuilder {
                 }
                 #[cfg(feature = "__rustls")]
                 TlsBackend::Rustls => {
+                    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
                     use crate::tls::{IgnoreHostname, NoVerifier};
 
                     // Set root certificates.
@@ -755,12 +760,14 @@ impl ClientBuilder {
                         });
 
                     // Build TLS config
+                    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
                     let signature_algorithms = provider.signature_verification_algorithms;
                     let config_builder =
                         rustls::ClientConfig::builder_with_provider(provider.clone())
                             .with_protocol_versions(&versions)
                             .map_err(|_| crate::error::builder("invalid TLS versions"))?;
 
+                    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
                     let config_builder = if !config.certs_verification {
                         config_builder
                             .dangerous()
@@ -796,10 +803,25 @@ impl ClientBuilder {
                     };
 
                     // Finalize TLS config
+                    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
                     let mut tls = if let Some(id) = config.identity {
                         id.add_to_rustls(config_builder)?
                     } else {
                         config_builder.with_no_client_auth()
+                    };
+
+                    #[cfg(feature = "rustls-tls-platform-verifier")]
+                    let mut tls = if config.tls_platform_verifier {
+                        use rustls_platform_verifier::BuilderVerifierExt;
+
+                        config_builder
+                            .with_platform_verifier()
+                            .map_err(|_| {
+                                crate::error::builder("invalid TLS verification settings")
+                            })?
+                            .with_no_client_auth()
+                    } else {
+                        unimplemented!()
                     };
 
                     tls.enable_sni = config.tls_sni;
@@ -1825,6 +1847,16 @@ impl ClientBuilder {
     #[cfg_attr(docsrs, doc(cfg(feature = "rustls-tls-native-roots-no-provider")))]
     pub fn tls_built_in_native_certs(mut self, enabled: bool) -> ClientBuilder {
         self.config.tls_built_in_certs_native = enabled;
+        self
+    }
+
+    /// Sets whether to use a native certificate verifier with rustls.
+    ///
+    /// If the feature is enabled, this value is `true` by default.
+    #[cfg(feature = "rustls-tls-platform-verifier")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "rustls-tls-platform-verifier")))]
+    pub fn tls_platform_verifier(mut self, enabled: bool) -> ClientBuilder {
+        self.config.tls_platform_verifier = enabled;
         self
     }
 

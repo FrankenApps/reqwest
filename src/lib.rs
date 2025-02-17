@@ -198,6 +198,8 @@
 //!   while using root certificates from the `webpki-roots` crate.
 //! - **rustls-tls-native-roots**: Enables TLS functionality provided by `rustls`,
 //!   while using root certificates from the `rustls-native-certs` crate.
+//! - **rustls-tls-platform-verifier**: Enables TLS functionality provided by `rustls`,
+//!   while using a certificate verifier provided by the native platform.
 //! - **blocking**: Provides the [blocking][] client API.
 //! - **charset** *(enabled by default)*: Improved support for decoding text.
 //! - **cookies**: Provides cookie session support.

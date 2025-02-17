@@ -44,6 +44,7 @@
 //!
 //! [rustls]: https://crates.io/crates/rustls
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 use rustls::{
     client::danger::HandshakeSignatureValid, client::danger::ServerCertVerified,
@@ -52,8 +53,11 @@ use rustls::{
     SignatureScheme,
 };
 use rustls_pki_types::pem::PemObject;
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 use rustls_pki_types::{ServerName, UnixTime};
+#[cfg(feature = "rustls-tls-platform-verifier")]
+use rustls::Error as TLSError;
 use std::{
     fmt,
     io::{BufRead, BufReader},
@@ -63,6 +67,7 @@ use std::{
 #[cfg(feature = "__rustls")]
 pub struct CertificateRevocationList {
     #[cfg(feature = "__rustls")]
+    #[cfg_attr(feature = "rustls-tls-platform-verifier", allow(unused))]
     inner: rustls_pki_types::CertificateRevocationListDer<'static>,
 }
 
@@ -86,6 +91,7 @@ enum Cert {
 #[derive(Clone)]
 pub struct Identity {
     #[cfg_attr(not(any(feature = "native-tls", feature = "__rustls")), allow(unused))]
+    #[cfg_attr(feature = "rustls-tls-platform-verifier", allow(unused))]
     inner: ClientCert,
 }
 
@@ -397,6 +403,7 @@ impl Identity {
         }
     }
 
+    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
     #[cfg(feature = "__rustls")]
     pub(crate) fn add_to_rustls(
         self,
@@ -479,6 +486,7 @@ impl CertificateRevocationList {
             .collect::<crate::Result<Vec<CertificateRevocationList>>>()
     }
 
+    #[cfg(not(feature = "rustls-tls-platform-verifier"))]
     #[cfg(feature = "__rustls")]
     pub(crate) fn as_rustls_crl<'a>(&self) -> rustls_pki_types::CertificateRevocationListDer<'a> {
         self.inner.clone()
@@ -603,10 +611,12 @@ impl Default for TlsBackend {
     }
 }
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 #[derive(Debug)]
 pub(crate) struct NoVerifier;
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 impl ServerCertVerifier for NoVerifier {
     fn verify_server_cert(
@@ -657,6 +667,7 @@ impl ServerCertVerifier for NoVerifier {
     }
 }
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 #[derive(Debug)]
 pub(crate) struct IgnoreHostname {
@@ -664,6 +675,7 @@ pub(crate) struct IgnoreHostname {
     signature_algorithms: WebPkiSupportedAlgorithms,
 }
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 impl IgnoreHostname {
     pub(crate) fn new(
@@ -677,6 +689,7 @@ impl IgnoreHostname {
     }
 }
 
+#[cfg(not(feature = "rustls-tls-platform-verifier"))]
 #[cfg(feature = "__rustls")]
 impl ServerCertVerifier for IgnoreHostname {
     fn verify_server_cert(

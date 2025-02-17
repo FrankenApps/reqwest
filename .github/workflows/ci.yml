@@ -132,6 +132,8 @@ jobs:
             features: "--no-default-features --features rustls-tls-native-roots"
           - name: "feat.: rustls-tls-no-provider"
             features: "--no-default-features --features rustls-tls-no-provider"
+          - name: "feat.: rustls-tls-platform-verifier"
+            features: "--no-default-features --features rustls-tls-platform-verifier"
           - name: "feat.: native-tls"
             features: "--features native-tls"
           - name: "feat.: rustls-tls and rustls-tls-no-provider"
